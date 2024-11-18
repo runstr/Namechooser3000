@@ -74,6 +74,11 @@ if __name__== "__main__":
 #    cec.set_active_source()
 
     subprocess.call(['figlet', '-c', 'Namechooser\n3000'])
+    with open('already_won_names.txt') as already_won_names:
+        print("\nThis year's current winners:")
+        for name in already_won_names:
+            print(name)
+
     rnm = None
     while (True):
         while(GPIO.input(choose_name_button_pin)):
@@ -84,8 +89,8 @@ if __name__== "__main__":
                 time.sleep(0.5)
                 rnm = None
             pass
-        names = [line.rstrip() for line in open('names.txt')]
-        names *= 3 # Three tickets per person
+        og_names = [line.rstrip() for line in open('names.txt')]
+        names = og_names*3 # Three tickets per person
 
         with open('already_won_names.txt') as already_won_names:
             for name in already_won_names:
@@ -110,7 +115,7 @@ if __name__== "__main__":
 
         sys.stdout.write("\r    Randomizing names...   ")
         time.sleep(0.8)
-        for name in names:
+        for name in og_names:
             sys.stdout.write("\r{:>23}...  ".format(name))
             time.sleep(0.1)
             

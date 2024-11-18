@@ -24,13 +24,15 @@ from urllib2 import urlopen
 # Only as backup due to unstable wifi-connection
 import random
 
-button_pin = 37;
+choose_name_button_pin = 37
+save_name_button_pin = 36
 URL = 'https://qrng.anu.edu.au/API/jsonI.php'
 
-names = [line.rstrip() for line in open('names.txt')]
+
 
 GPIO.setmode(GPIO.BOARD)
-GPIO.setup(button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.setup(choose_name_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.setup(save_name_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 keep_spinning = True
 finished = False
@@ -72,11 +74,26 @@ if __name__== "__main__":
 #    cec.set_active_source()
 
     subprocess.call(['figlet', '-c', 'Namechooser\n3000'])
-
+    rnm = None
     while (True):
-        while(GPIO.input(button_pin)):
+        while(GPIO.input(choose_name_button_pin)):
+            if not GPIO.input(save_name_button_pin) and rnm is not None:
+                with open('already_won_names.txt', 'a') as already_won_names:
+                    already_won_names.write(names[rnm%len(names)]+'\n')
+                print("Name saved!")
+                time.sleep(0.5)
+                rnm = None
             pass
+        names = [line.rstrip() for line in open('names.txt')]
+        names *= 3 # Three tickets per person
 
+        with open('already_won_names.txt') as already_won_names:
+            for name in already_won_names:
+                try:
+                    names.remove(name.rstrip())
+                except ValueError:
+                    pass
+                
         keep_spinning = True
         sys.stdout.write("Splitting photon beam... ")
 

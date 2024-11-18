@@ -14,26 +14,32 @@ import json
 import itertools
 import threading
 import subprocess
-import cec
+#import cec
 import cmd
 import tty, termios
+import RPi.GPIO as GPIO
 from urllib import urlencode
 from urllib2 import urlopen
 
 # Only as backup due to unstable wifi-connection
 import random
 
+button_pin = 37;
 URL = 'https://qrng.anu.edu.au/API/jsonI.php'
 
 names = [line.rstrip() for line in open('names.txt')]
 
+GPIO.setmode(GPIO.BOARD)
+GPIO.setup(button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
 keep_spinning = True
 finished = False
-buttonPressed = False
-def keyPressEventHandler(event, *args):
-    global buttonPressed
-    buttonPressed = True
-    print("Event: "+event+ " Args: "+ args)
+#BbuttonPressed = False
+#def keyPressEventHandler(event, *args):
+#    global buttonPressed
+#    buttonPressed = True
+#    print("Event: "+event+ " Args: "+ args)
+numbers = []
 
 def spin_bar():
     spinner = itertools.cycle(['-', '\\', '|', '/'])
@@ -46,25 +52,31 @@ def spin_bar():
 
 def get_random_number():
     """Fetch data from the ANU Quantum Random Numbers JSON API"""
+    global numbers
+    if numbers:
+        return numbers.pop()
     url = URL + '?' + urlencode({
         'type': 'uint16',
-        'length': 1,
+        'length': 30,
         'size': 1,
     })
-    data = json.loads(urlopen(url, timeout=5).read())
+    data = urlopen(url, timeout=5).read()
+    data = json.loads(data)
     assert data['success'] is True
-    return data['data'][0]
+    numbers = data['data']
+    return numbers.pop()
 
 if __name__== "__main__":
-    cec.add_callback(keyPressEventHandler, 2)
-    cec.init()
-    cec.set_active_source()
+#    cec.add_callback(keyPressEventHandler, 1)
+#    cec.init()
+#    cec.set_active_source()
 
     subprocess.call(['figlet', '-c', 'Namechooser\n3000'])
+
     while (True):
-        while(not buttonPressed):
+        while(GPIO.input(button_pin)):
             pass
- 
+
         keep_spinning = True
         sys.stdout.write("Splitting photon beam... ")
 
@@ -72,10 +84,10 @@ if __name__== "__main__":
         t.start()
         try:
             rnm = get_random_number()
-        except:
-            sys.stdout.write("\r    WIFI ERROR...          ")
+        except Exception as e:
+            sys.stdout.write("\rWifi Error: error code "+str(e)+"\n")
             time.sleep(0.6)
-            sys.stdout.write("\rPseudo-random fallback...  ")
+            sys.stdout.write("Pseudo-random fallback...  ")
             time.sleep(0.6)
             rnm = random.randint(1,len(names))
 
@@ -90,9 +102,6 @@ if __name__== "__main__":
         print("\r                                    \n")
         subprocess.call(['figlet', '-c', names[rnm%len(names)].decode('utf-8').encode('latin-1')])
 
-        buttonPressed = False
+        # buttonPressed = False
 
         print("\n\n")
-        
-       
-            

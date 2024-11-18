@@ -107,9 +107,7 @@ if __name__== "__main__":
         try:
             rnm = get_random_number()
         except Exception as e:
-            sys.stdout.write("\rWifi Error: error code "+str(e)+"\n")
-            time.sleep(0.6)
-            sys.stdout.write("Pseudo-random fallback...  ")
+            sys.stdout.write("\rWifi Error; Using Pseudo-random fallback...  \n")
             time.sleep(0.6)
             rnm = random.randint(1,len(names))
 

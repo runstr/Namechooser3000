@@ -52,21 +52,27 @@ def spin_bar():
         sys.stdout.write('\b')
     finished = True
 
-def get_random_number():
+def get_random_number(num_names):
     """Fetch data from the ANU Quantum Random Numbers JSON API"""
     global numbers
     if numbers:
-        return numbers.pop()
+        rn = numbers.pop()
+        while rn >= num_names:
+            rn = numbers.pop()
+        return rn
     url = URL + '?' + urlencode({
-        'type': 'uint16',
-        'length': 30,
+        'type': 'uint8',
+        'length': 256,
         'size': 1,
     })
     data = urlopen(url, timeout=5).read()
     data = json.loads(data)
     assert data['success'] is True
     numbers = data['data']
-    return numbers.pop()
+    rn = numbers.pop()
+    while rn >= num_names:
+        rn = numbers.pop()
+    return rn
 
 if __name__== "__main__":
 #    cec.add_callback(keyPressEventHandler, 1)
@@ -84,7 +90,10 @@ if __name__== "__main__":
         while(GPIO.input(choose_name_button_pin)):
             if not GPIO.input(save_name_button_pin) and rnm is not None:
                 with open('already_won_names.txt', 'a') as already_won_names:
-                    already_won_names.write(names[rnm%len(names)]+'\n')
+                    already_won_names.write(names[rnm]+'\n')
+                    print("\nThis year's current winners:")
+                    for name in already_won_names:
+                        print(name)
                 print("Name saved!")
                 time.sleep(0.5)
                 rnm = None
@@ -105,7 +114,7 @@ if __name__== "__main__":
         t = threading.Thread(target=spin_bar)
         t.start()
         try:
-            rnm = get_random_number()
+            rnm = get_random_number(len(names))
         except Exception as e:
             sys.stdout.write("\rWifi Error; Using Pseudo-random fallback...  \n")
             time.sleep(0.6)
@@ -120,7 +129,7 @@ if __name__== "__main__":
         keep_spinning = False
         
         print("\r                                    \n")
-        subprocess.call(['figlet', '-c', names[rnm%len(names)].decode('utf-8').encode('latin-1')])
+        subprocess.call(['figlet', '-c', names[rnm].decode('utf-8').encode('latin-1')])
 
         # buttonPressed = False
 

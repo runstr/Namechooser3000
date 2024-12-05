@@ -118,7 +118,7 @@ if __name__== "__main__":
         except Exception as e:
             sys.stdout.write("\rWifi Error; Using Pseudo-random fallback...  \n")
             time.sleep(0.6)
-            rnm = random.randint(0,len(names)-1)
+            rnm = random.randint(1,len(names))
 
         sys.stdout.write("\r    Randomizing names...   ")
         time.sleep(0.8)

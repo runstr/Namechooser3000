@@ -36,11 +36,6 @@ GPIO.setup(save_name_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 keep_spinning = True
 finished = False
-#BbuttonPressed = False
-#def keyPressEventHandler(event, *args):
-#    global buttonPressed
-#    buttonPressed = True
-#    print("Event: "+event+ " Args: "+ args)
 numbers = []
 
 def spin_bar():
@@ -69,15 +64,11 @@ def get_random_number():
     return numbers.pop()
 
 if __name__== "__main__":
-#    cec.add_callback(keyPressEventHandler, 1)
-#    cec.init()
-#    cec.set_active_source()
 
     subprocess.call(['figlet', '-c', 'Namechooser\n3000'])
     with open('already_won_names.txt') as already_won_names:
         print("\nThis year's current winners:")
-        for name in already_won_names:
-            print(name)
+        print(already_won_names.read())
 
     rnm = None
     while (True):
@@ -86,6 +77,9 @@ if __name__== "__main__":
                 with open('already_won_names.txt', 'a') as already_won_names:
                     already_won_names.write(names[rnm%len(names)]+'\n')
                 print("Name saved!")
+                with open('already_won_names.txt', 'r') as already_won_names:
+                    print("\nThis year's current winners:")
+                    print(already_won_names.read())
                 time.sleep(0.5)
                 rnm = None
             pass
@@ -109,7 +103,7 @@ if __name__== "__main__":
         except Exception as e:
             sys.stdout.write("\rWifi Error; Using Pseudo-random fallback...  \n")
             time.sleep(0.6)
-            rnm = random.randint(1,len(names))
+            rnm = random.randint(1, len(names))
 
         sys.stdout.write("\r    Randomizing names...   ")
         time.sleep(0.8)

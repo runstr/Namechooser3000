@@ -46,7 +46,7 @@ def set_seed():
         current_time = int(time.time())
         sys.stdout.write("\rSetting random seed \n")
         random_seed = get_random_number()
-        random.seed(current_time+random_seed)
+        random.seed(current_time*random_seed)
     except Exception as e:
         sys.stdout.write("\rWifi Error; Using Pseudo-random fallback...  \n")
 
@@ -78,7 +78,7 @@ if __name__ == "__main__":
         while (GPIO.input(choose_name_button_pin)):
             if not GPIO.input(save_name_button_pin) and rnm is not None:
                 with open('already_won_names.txt', 'a') as already_won_names:
-                    already_won_names.write(names[rnm % len(names)] + '\n')
+                    already_won_names.write(rnm + '\n')
                 print("Name saved!")
                 with open('already_won_names.txt', 'r') as already_won_names:
                     print("\nThis year's current winners:")
@@ -101,7 +101,7 @@ if __name__ == "__main__":
 
         t = threading.Thread(target=spin_bar)
         t.start()
-        rnm = get_random_number()
+        rnm = random.choice(names)
 
         sys.stdout.write("\r    Randomizing names...   ")
         time.sleep(0.8)
@@ -112,6 +112,6 @@ if __name__ == "__main__":
         keep_spinning = False
 
         print("\r                                    \n")
-        subprocess.call(['figlet', '-c', names[rnm % len(names)].decode('utf-8').encode('latin-1')])
+        subprocess.call(['figlet', '-c', rnm.decode('utf-8').encode('latin-1')])
 
         print("\n\n")

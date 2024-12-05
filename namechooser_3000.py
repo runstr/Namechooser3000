@@ -14,9 +14,6 @@ import json
 import itertools
 import threading
 import subprocess
-#import cec
-import cmd
-import tty, termios
 import RPi.GPIO as GPIO
 from urllib import urlencode
 from urllib2 import urlopen
@@ -28,15 +25,12 @@ choose_name_button_pin = 37
 save_name_button_pin = 36
 URL = 'https://qrng.anu.edu.au/API/jsonI.php'
 
-
-
 GPIO.setmode(GPIO.BOARD)
 GPIO.setup(choose_name_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(save_name_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 keep_spinning = True
-finished = False
-numbers = []
+
 
 def spin_bar():
     spinner = itertools.cycle(['-', '\\', '|', '/'])
@@ -45,16 +39,23 @@ def spin_bar():
         sys.stdout.flush()
         time.sleep(0.1)
         sys.stdout.write('\b')
-    finished = True
+
+
+def set_seed():
+    try:
+        current_time = int(time.time())
+        sys.stdout.write("\rSetting random seed \n")
+        random_seed = get_random_number()
+        random.seed(current_time*random_seed)
+    except Exception as e:
+        sys.stdout.write("\rWifi Error; Using Pseudo-random fallback...  \n")
+
 
 def get_random_number():
     """Fetch data from the ANU Quantum Random Numbers JSON API"""
-    global numbers
-    if numbers:
-        return numbers.pop()
     url = URL + '?' + urlencode({
         'type': 'uint16',
-        'length': 30,
+        'length': 1,
         'size': 1,
     })
     data = urlopen(url, timeout=5).read()
@@ -63,19 +64,22 @@ def get_random_number():
     numbers = data['data']
     return numbers.pop()
 
-if __name__== "__main__":
 
-    subprocess.call(['figlet', '-c', 'Namechooser\n3000'])
+if __name__ == "__main__":
+    # Seet the random module in the beginning of the test
+    set_seed()
+
+    subprocess.call(['figlet', '-c', 'Namechooser\n4000'])
     with open('already_won_names.txt') as already_won_names:
         print("\nThis year's current winners:")
         print(already_won_names.read())
 
     rnm = None
     while (True):
-        while(GPIO.input(choose_name_button_pin)):
+        while (GPIO.input(choose_name_button_pin)):
             if not GPIO.input(save_name_button_pin) and rnm is not None:
                 with open('already_won_names.txt', 'a') as already_won_names:
-                    already_won_names.write(names[rnm%len(names)]+'\n')
+                    already_won_names.write(rnm + '\n')
                 print("Name saved!")
                 with open('already_won_names.txt', 'r') as already_won_names:
                     print("\nThis year's current winners:")
@@ -84,7 +88,7 @@ if __name__== "__main__":
                 rnm = None
             pass
         og_names = [line.rstrip() for line in open('names.txt')]
-        names = og_names*3 # Three tickets per person
+        names = og_names * 3  # Three tickets per person
 
         with open('already_won_names.txt') as already_won_names:
             for name in already_won_names:
@@ -92,30 +96,25 @@ if __name__== "__main__":
                     names.remove(name.rstrip())
                 except ValueError:
                     pass
-                
+
         keep_spinning = True
         sys.stdout.write("Splitting photon beam... ")
 
         t = threading.Thread(target=spin_bar)
         t.start()
-        try:
-            rnm = get_random_number()
-        except Exception as e:
-            sys.stdout.write("\rWifi Error; Using Pseudo-random fallback...  \n")
-            time.sleep(0.6)
-            rnm = random.randint(1, len(names))
+
+        random.shuffle(names)
+        rnm = random.choice(names)
 
         sys.stdout.write("\r    Randomizing names...   ")
         time.sleep(0.8)
         for name in og_names:
             sys.stdout.write("\r{:>23}...  ".format(name))
             time.sleep(0.1)
-            
-        keep_spinning = False
-        
-        print("\r                                    \n")
-        subprocess.call(['figlet', '-c', names[rnm%len(names)].decode('utf-8').encode('latin-1')])
 
-        # buttonPressed = False
+        keep_spinning = False
+
+        print("\r                                    \n")
+        subprocess.call(['figlet', '-c', rnm.decode('utf-8').encode('latin-1')])
 
         print("\n\n")

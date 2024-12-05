@@ -66,6 +66,7 @@ def get_random_number():
 
 
 if __name__ == "__main__":
+    # Seet the random module in the beginning of the test
     set_seed()
 
     subprocess.call(['figlet', '-c', 'Namechooser\n4000'])
@@ -101,6 +102,8 @@ if __name__ == "__main__":
 
         t = threading.Thread(target=spin_bar)
         t.start()
+
+        random.shuffle(names)
         rnm = random.choice(names)
 
         sys.stdout.write("\r    Randomizing names...   ")

@@ -79,10 +79,7 @@ def qrng_uniform_index(n):
 
 
 if __name__ == "__main__":
-    if platform.system() == 'Windows':
-        pyfiglet.print_figlet('Namechooser\n4000', justify='center')
-    else:
-        subprocess.call(['figlet', '-c', 'Namechooser\n4000'])
+    subprocess.call(['figlet', '-c', 'Namechooser\n4000'])
     with open('already_won_names.txt') as already_won_names:
         print("\nThis year's current winners:")
         print(already_won_names.read())

@@ -15,6 +15,7 @@ import threading
 import subprocess
 import RPi.GPIO as GPIO
 from urllib import urlencode
+
 from urllib2 import urlopen
 
 # Only as backup due to unstable wifi-connection
@@ -23,6 +24,7 @@ import random
 choose_name_button_pin = 37
 save_name_button_pin = 36
 URL = 'https://qrng.anu.edu.au/API/jsonI.php'
+# TODO: In the future, this will be deprecated. Migrate to: https://quantumnumbers.anu.edu.au/
 
 GPIO.setmode(GPIO.BOARD)
 GPIO.setup(choose_name_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
@@ -30,6 +32,7 @@ GPIO.setup(save_name_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 keep_spinning = True
 keep_checking = True
+error_message = None
 
 numbers = None
 
@@ -48,7 +51,7 @@ def spin_bar():
 
 def get_random_number():
     """Fetch data from the ANU Quantum Random Numbers JSON API"""
-    global numbers, keep_checking
+    global numbers, keep_checking, error_message
     if numbers:
         return
     url = URL + '?' + urlencode({
@@ -62,8 +65,9 @@ def get_random_number():
         data = json.loads(data)
         assert data['success'] is True
         numbers = data['data']
+        error_message = None
     except Exception:
-        print("\nError in getting quantum random numbers. Using Pseudo-random fallback...")
+        error_message = "\nError in getting quantum random numbers. Using Pseudo-random fallback..."
     keep_checking = False
 
 
@@ -129,6 +133,9 @@ if __name__ == "__main__":
         for name in original_names:
             sys.stdout.write("\r{:>23}...  ".format(name))
             time.sleep(0.1)
+        if error_message:
+            print(error_message)
+
 
         idx = qrng_uniform_index(len(names))
         rnm = names[idx]

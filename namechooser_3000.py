@@ -62,7 +62,7 @@ def get_random_number():
         data = json.loads(data)
         assert data['success'] is True
         numbers = data['data']
-    except Exception as e:
+    except Exception:
         print("\nError in getting quantum random numbers. Using Pseudo-random fallback...")
     keep_checking = False
 
@@ -83,24 +83,26 @@ def qrng_uniform_index(n):
     return random.randint(0,n)
 
 
+def print_winners():
+    """Print the winner's name using figlet"""
+    with open('already_won_names.txt') as winners:
+        print("\nThis year's current winners:")
+        print(winners.read())
+
 if __name__ == "__main__":
     subprocess.call(['figlet', '-c', 'Namechooser\n4000'])
-    with open('already_won_names.txt') as already_won_names:
-        print("\nThis year's current winners:")
-        print(already_won_names.read())
+    print_winners()
 
     rnm = None
     while True:
         # Wait for button press to choose name
         while GPIO.input(choose_name_button_pin):
-            # Use GPIO pin to chose if you want to save name alreay picked
+            # Use GPIO pin to chose if you want to save name already picked
             if not GPIO.input(save_name_button_pin) and rnm is not None:
                 with open('already_won_names.txt', 'a') as already_won_names:
                     already_won_names.write(rnm + '\n')
                 print("Name saved!")
-                with open('already_won_names.txt', 'r') as already_won_names:
-                    print("\nThis year's current winners:")
-                    print(already_won_names.read())
+                print_winners()
                 time.sleep(0.5)
                 rnm = None
         # Load names and prepare ticket pool with 3 tickets per person
@@ -130,7 +132,7 @@ if __name__ == "__main__":
 
         idx = qrng_uniform_index(len(names))
         rnm = names[idx]
-        time.sleep(0.5)
+        time.sleep(0.1)
 
         keep_spinning = False
 

@@ -29,6 +29,7 @@ GPIO.setup(choose_name_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(save_name_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 keep_spinning = True
+keep_checking = True
 
 numbers = None
 
@@ -47,32 +48,40 @@ def spin_bar():
 
 def get_random_number():
     """Fetch data from the ANU Quantum Random Numbers JSON API"""
-    global numbers
+    global numbers, keep_checking
     if numbers:
-        return numbers.pop()
+        return
     url = URL + '?' + urlencode({
         'type': 'uint16',
         'length': 30,
         'size': 1,
     })
-    data = urlopen(url, timeout=5).read()
-    data = json.loads(data)
-    assert data['success'] is True
-    numbers = data['data']
-    return numbers.pop()
+    try:
+        keep_checking = True
+        data = urlopen(url, timeout=5).read()
+        data = json.loads(data)
+        assert data['success'] is True
+        numbers = data['data']
+        print("Debug message: QRNG numbers fetched:", numbers)
+    except Exception as e:
+        print("\nError in getting quantum random numbers. Using Pseudo-random fallback...")
+        numbers = [random.getrandbits(16)]
+    keep_checking = False
+
+
+
 
 
 def qrng_uniform_index(n):
     """Return an unbiased integer in [0, n-1] using rejection sampling from the QRNG."""
     # Use 16-bit chunks from the QRNG. If n > 2^16, combine into 32-bit.
+    global keep_checking
     bound = 2 ** 16
     limit = (bound // n) * n
     while True:
-        try:
-            x = get_random_number()
-        except Exception as e:
-            print("\nWifi Error; Using Pseudo-random fallback...")
-            x = random.getrandbits(16)
+        while keep_checking:
+            pass
+        x = numbers.pop()
         if x < limit:
             return x % n
 
@@ -116,6 +125,8 @@ if __name__ == "__main__":
         t.start()
         # Get random index from QRNG and select name
         sys.stdout.write("\r    Randomizing names...   ")
+        t2 = threading.Thread(target=get_random_number)
+        t2.start()
         for name in original_names:
             sys.stdout.write("\r{:>23}...  ".format(name))
             time.sleep(0.1)

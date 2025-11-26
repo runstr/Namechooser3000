@@ -62,14 +62,9 @@ def get_random_number():
         data = json.loads(data)
         assert data['success'] is True
         numbers = data['data']
-        print("Debug message: QRNG numbers fetched:", numbers)
     except Exception as e:
         print("\nError in getting quantum random numbers. Using Pseudo-random fallback...")
-        numbers = [random.getrandbits(16)]
     keep_checking = False
-
-
-
 
 
 def qrng_uniform_index(n):
@@ -78,12 +73,14 @@ def qrng_uniform_index(n):
     global keep_checking
     bound = 2 ** 16
     limit = (bound // n) * n
-    while True:
-        while keep_checking:
-            pass
+    while keep_checking:
+        pass
+    while numbers:
+        # Fallback to pseudo-random
         x = numbers.pop()
         if x < limit:
             return x % n
+    return random.randint(0,n)
 
 
 if __name__ == "__main__":

@@ -49,11 +49,10 @@ def get_random_number():
     """Fetch data from the ANU Quantum Random Numbers JSON API"""
     global numbers
     if numbers:
-        time.sleep(1)
         return numbers.pop()
     url = URL + '?' + urlencode({
         'type': 'uint16',
-        'length': 100,
+        'length': 30,
         'size': 1,
     })
     data = urlopen(url, timeout=5).read()
@@ -89,7 +88,7 @@ if __name__ == "__main__":
         # Wait for button press to choose name
         while GPIO.input(choose_name_button_pin):
             # Use GPIO pin to chose if you want to save name alreay picked
-            if GPIO.input(save_name_button_pin) and rnm is not None:
+            if not GPIO.input(save_name_button_pin) and rnm is not None:
                 with open('already_won_names.txt', 'a') as already_won_names:
                     already_won_names.write(rnm + '\n')
                 print("Name saved!")
@@ -123,7 +122,7 @@ if __name__ == "__main__":
 
         idx = qrng_uniform_index(len(names))
         rnm = names[idx]
-        time.sleep(2)
+        time.sleep(0.5)
 
         keep_spinning = False
 
